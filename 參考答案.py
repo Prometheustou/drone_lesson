@@ -1,14 +1,10 @@
 import cv2
 from robomaster import robot
-import time
+import threading
+from time import sleep
 
-if __name__ == '__main__':
-    tl_drone = robot.Drone()
-    tl_drone.initialize()
-    tl_flight = tl_drone.flight
 
-    # 起飞后降落
-    tl_flight.takeoff().wait_for_completed()
+def take_photo():
     tl_camera = tl_drone.camera
     # 显示302帧图传
     tl_camera.start_video_stream(display=False)
@@ -23,11 +19,27 @@ if __name__ == '__main__':
         cv2.imshow("Drone", img)
         file_name = "C:\\Users\\acer\\Desktop\\save\\image_" + str(i + 1) + ".jpg"
         cv2.imwrite(file_name, img)
-        tl_flight.rotate(angle=10).wait_for_completed()
         cv2.waitKey(1)
-        #time.sleep(2)
-
     cv2.destroyAllWindows()
     tl_camera.stop_video_stream()
-    tl_flight.land().wait_for_completed()
     tl_drone.close()
+
+
+def flight_fun():
+    for i in range(36):
+        tl_flight.rotate(angle=10).wait_for_completed()
+        sleep(1)
+    
+
+if __name__ == '__main__':
+    tl_drone = robot.Drone()
+    tl_drone.initialize()
+    tl_flight = tl_drone.flight
+    tl_flight.takeoff().wait_for_completed()
+    a = threading.Thread(target=take_photo())
+    b = threading.Thread(target=flight_fun())
+    a.start()
+    b.start()
+    tl_flight.land().wait_for_completed()
+    # 起飞后降落
+
